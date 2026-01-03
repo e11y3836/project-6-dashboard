@@ -3,15 +3,22 @@
   // ACTIVITY FEED COMPONENT (Complete Solution)
   // ============================================
   // Real-time activity feed using Firestore onSnapshot
-  import { onMount } from 'svelte';
-  import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
-  import { db } from '../firebase';
-  import authStore from '../stores/authStore';
+  import { onMount } from "svelte";
+  import {
+    collection,
+    query,
+    orderBy,
+    limit,
+    onSnapshot,
+    where,
+  } from "firebase/firestore";
+  import { db } from "../firebase";
+  import authStore from "../stores/authStore";
 
   // ==================== COMPONENT STATE ====================
   let activities = [];
   let loading = true;
-  let error = '';
+  let error = "";
 
   // ==================== REAL-TIME LISTENER ====================
   /**
@@ -29,9 +36,10 @@
 
     // Build Firestore query
     const q = query(
-      collection(db, 'activities'),
-      orderBy('timestamp', 'desc'),
-      limit(10)
+      collection(db, "activities"),
+      where("userId", "==", $authStore.user.uid),
+      orderBy("timestamp", "desc"),
+      limit(10),
     );
 
     // Set up real-time listener
@@ -39,20 +47,20 @@
       q,
       (snapshot) => {
         // Transform Firestore documents to JavaScript objects
-        activities = snapshot.docs.map(doc => ({
+        activities = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
           // Convert Firestore Timestamp to JavaScript Date
-          timestamp: doc.data().timestamp?.toDate()
+          timestamp: doc.data().timestamp?.toDate(),
         }));
         loading = false;
         console.log(`Loaded ${activities.length} activities`);
       },
       (err) => {
-        console.error('Error listening to activities:', err);
-        error = 'Failed to load activities. Please refresh the page.';
+        console.error("Error listening to activities:", err);
+        error = "Failed to load activities. Please refresh the page.";
         loading = false;
-      }
+      },
     );
 
     // Critical: Clean up listener when component unmounts
@@ -66,7 +74,7 @@
    * @returns {string} - Formatted relative time string
    */
   function formatTime(timestamp) {
-    if (!timestamp) return '';
+    if (!timestamp) return "";
 
     const now = new Date();
     const diff = now - timestamp; // Difference in milliseconds
@@ -75,7 +83,7 @@
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'Just now';
+    if (minutes < 1) return "Just now";
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     return `${days}d ago`;
@@ -119,7 +127,9 @@
                   <p class="mb-1 text-muted small">{activity.description}</p>
                 {/if}
               </div>
-              <small class="text-muted timestamp">{formatTime(activity.timestamp)}</small>
+              <small class="text-muted timestamp"
+                >{formatTime(activity.timestamp)}</small
+              >
             </div>
           </div>
         {/each}
@@ -129,7 +139,9 @@
       <div class="text-center py-5">
         <i class="bi bi-inbox fs-1 text-muted"></i>
         <p class="text-muted mt-2 mb-0">No recent activity</p>
-        <small class="text-muted">Activities will appear here once you add them</small>
+        <small class="text-muted"
+          >Activities will appear here once you add them</small
+        >
       </div>
     {/if}
   </div>

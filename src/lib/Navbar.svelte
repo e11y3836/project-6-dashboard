@@ -3,10 +3,10 @@
   // NAVIGATION BAR COMPONENT (Complete Solution)
   // ============================================
   // Provides site-wide navigation with user authentication status
-  import { signOut } from 'firebase/auth';
-  import { auth } from '../firebase';
-  import authStore from '../stores/authStore';
-  import { goto } from '$app/navigation';
+  import { signOut } from "firebase/auth";
+  import { auth } from "../firebase";
+  import authStore from "../stores/authStore";
+  import { goto } from "$app/navigation";
 
   // ==================== LOGOUT FUNCTION ====================
   /**
@@ -25,16 +25,16 @@
       $authStore.user = null;
 
       // Redirect to login
-      await goto('/login');
+      await goto("/login");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     }
   }
 </script>
 
 <!-- ==================== NAVIGATION BAR ==================== -->
 <!-- Bootstrap 5 responsive navbar with brand, links, and user menu -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+<nav class="navbar navbar-expand-lg border-bottom shadow-sm welcome-gradient">
   <div class="container">
     <!-- Brand / Logo -->
     <a class="navbar-brand fw-bold" href="/">
@@ -83,13 +83,13 @@
       <div class="navbar-nav">
         <div class="nav-item dropdown">
           <button
-            class="nav-link dropdown-toggle bg-transparent border-0"
+            class="nav-link dropdown-toggle bg-transparent border-0 text-dark"
             type="button"
             data-bs-toggle="dropdown"
             aria-expanded="false"
           >
             <i class="bi bi-person-circle me-1"></i>
-            {$authStore.user?.email || 'User'}
+            {$authStore.user?.email || "User"}
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li>
@@ -98,7 +98,7 @@
                 Profile Settings
               </a>
             </li>
-            <li><hr class="dropdown-divider"></li>
+            <li><hr class="dropdown-divider" /></li>
             <li>
               <button class="dropdown-item text-danger" on:click={logout}>
                 <i class="bi bi-box-arrow-right me-2"></i>
@@ -114,7 +114,18 @@
 
 <style>
   .navbar {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: linear-gradient(135deg, #ffdde1 0%, #ee9ca7 100%) !important;
+  }
+
+  .navbar-brand,
+  .nav-link {
+    color: #4a4a4a !important;
+    font-weight: 500;
+  }
+
+  .nav-link.active {
+    font-weight: 700;
+    color: #c94b4b !important;
   }
 
   .nav-link {

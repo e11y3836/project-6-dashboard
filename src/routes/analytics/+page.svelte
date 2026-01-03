@@ -3,16 +3,16 @@
   // ANALYTICS PAGE (Complete Solution)
   // ============================================
   // Data visualization and analytics dashboard for user activity
-  import { onMount, onDestroy } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { collection, query, where, getDocs } from 'firebase/firestore';
-  import { db } from '../../firebase';
-  import authStore from '../../stores/authStore';
-  import Navbar from '$lib/Navbar.svelte';
+  import { onMount, onDestroy } from "svelte";
+  import { goto } from "$app/navigation";
+  import { collection, query, where, getDocs } from "firebase/firestore";
+  import { db } from "../../firebase";
+  import authStore from "../../stores/authStore";
+  import Navbar from "$lib/Navbar.svelte";
 
   // ==================== COMPONENT STATE ====================
   let loading = true;
-  let error = '';
+  let error = "";
 
   // Analytics data structure
   let analyticsData = {
@@ -21,7 +21,7 @@
     thisMonth: 0,
     last30Days: [],
     activityByType: {},
-    recentTrends: []
+    recentTrends: [],
   };
 
   // ==================== AUTHENTICATION GUARD ====================
@@ -30,7 +30,7 @@
    */
   const sub = authStore.subscribe(async (info) => {
     if (!info.isLoggedIn && info.firebaseControlled) {
-      await goto('/login');
+      await goto("/login");
     }
   });
 
@@ -47,8 +47,8 @@
 
       // Query all user activities
       const activitiesQuery = query(
-        collection(db, 'activities'),
-        where('userId', '==', $authStore.user.uid)
+        collection(db, "activities"),
+        where("userId", "==", $authStore.user.uid),
       );
 
       const snapshot = await getDocs(activitiesQuery);
@@ -62,7 +62,7 @@
       analyticsData.thisWeek = 0;
       analyticsData.thisMonth = 0;
 
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc) => {
         const data = doc.data();
         const timestamp = data.timestamp?.toDate();
 
@@ -72,10 +72,10 @@
         }
       });
 
-      console.log('Analytics data loaded:', analyticsData);
+      console.log("Analytics data loaded:", analyticsData);
     } catch (err) {
-      console.error('Error loading analytics:', err);
-      error = 'Failed to load analytics data. Please refresh the page.';
+      console.error("Error loading analytics:", err);
+      error = "Failed to load analytics data. Please refresh the page.";
     } finally {
       loading = false;
     }
@@ -114,9 +114,15 @@
 <main class="container-fluid py-4">
   {#if loading}
     <!-- Loading state -->
-    <div class="d-flex justify-content-center align-items-center loading-container">
+    <div
+      class="d-flex justify-content-center align-items-center loading-container"
+    >
       <div class="text-center">
-        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <div
+          class="spinner-border text-primary"
+          role="status"
+          style="width: 3rem; height: 3rem;"
+        >
           <span class="visually-hidden">Loading analytics...</span>
         </div>
         <p class="text-muted mt-3">Loading your analytics...</p>
@@ -126,12 +132,16 @@
     <!-- Page Header -->
     <div class="row mb-4">
       <div class="col-12">
-        <div class="page-header bg-gradient text-white rounded-3 p-4 shadow">
+        <div
+          class="page-header welcome-gradient text-dark rounded-3 p-4 shadow"
+        >
           <h1 class="display-6 fw-bold mb-2">
             <i class="bi bi-graph-up me-2"></i>
             Analytics Dashboard
           </h1>
-          <p class="lead mb-0">Track your activity trends and performance metrics</p>
+          <p class="lead mb-0">
+            Track your activity trends and performance metrics
+          </p>
         </div>
       </div>
     </div>
@@ -140,10 +150,17 @@
     {#if error}
       <div class="row mb-4">
         <div class="col-12">
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <div
+            class="alert alert-danger alert-dismissible fade show"
+            role="alert"
+          >
             <i class="bi bi-exclamation-triangle me-2"></i>
             {error}
-            <button type="button" class="btn-close" on:click={() => error = ''}></button>
+            <button
+              type="button"
+              class="btn-close"
+              on:click={() => (error = "")}
+            ></button>
           </div>
         </div>
       </div>
@@ -161,7 +178,9 @@
                 <i class="bi bi-collection text-white"></i>
               </div>
             </div>
-            <h2 class="display-5 fw-bold mb-0">{analyticsData.totalActivities}</h2>
+            <h2 class="display-5 fw-bold mb-0">
+              {analyticsData.totalActivities}
+            </h2>
             <small class="text-muted">All time</small>
           </div>
         </div>
@@ -289,7 +308,8 @@
               </li>
               <li class="mb-3">
                 <i class="bi bi-info-circle-fill text-info me-2"></i>
-                <strong>Recommendation:</strong> Maintain current pace for optimal results
+                <strong>Recommendation:</strong> Maintain current pace for optimal
+                results
               </li>
             </ul>
           </div>
@@ -301,8 +321,9 @@
 
 <!-- ==================== STYLES ==================== -->
 <style>
-  .bg-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  .welcome-gradient {
+    background-color: #ffdde1;
+    background: linear-gradient(135deg, #ffdde1 0%, #ee9ca7 100%);
   }
 
   .page-header {

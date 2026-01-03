@@ -3,32 +3,36 @@
   // PROFILE PAGE (Complete Solution)
   // ============================================
   // User profile management and account settings
-  import { onMount, onDestroy } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { updatePassword, updateEmail, sendEmailVerification } from 'firebase/auth';
-  import { auth } from '../../firebase';
-  import authStore from '../../stores/authStore';
-  import Navbar from '$lib/Navbar.svelte';
+  import { onMount, onDestroy } from "svelte";
+  import { goto } from "$app/navigation";
+  import {
+    updatePassword,
+    updateEmail,
+    sendEmailVerification,
+  } from "firebase/auth";
+  import { auth } from "../../firebase";
+  import authStore from "../../stores/authStore";
+  import Navbar from "$lib/Navbar.svelte";
 
   // ==================== COMPONENT STATE ====================
   let loading = false;
-  let error = '';
-  let successMessage = '';
+  let error = "";
+  let successMessage = "";
 
   // Profile data
-  let userEmail = '';
-  let userCreatedDate = '';
+  let userEmail = "";
+  let userCreatedDate = "";
   let emailVerified = false;
 
   // Edit mode state
   let isEditingEmail = false;
-  let newEmail = '';
+  let newEmail = "";
 
   // Password change state
   let isChangingPassword = false;
-  let currentPassword = '';
-  let newPassword = '';
-  let confirmPassword = '';
+  let currentPassword = "";
+  let newPassword = "";
+  let confirmPassword = "";
 
   // ==================== AUTHENTICATION GUARD ====================
   /**
@@ -36,12 +40,12 @@
    */
   const sub = authStore.subscribe(async (info) => {
     if (!info.isLoggedIn && info.firebaseControlled) {
-      await goto('/login');
+      await goto("/login");
     } else if (info.user) {
       // Update profile data when user is available
-      userEmail = info.user.email || '';
+      userEmail = info.user.email || "";
       emailVerified = info.user.emailVerified || false;
-      userCreatedDate = info.user.metadata?.creationTime || 'Unknown';
+      userCreatedDate = info.user.metadata?.creationTime || "Unknown";
     }
   });
 
@@ -51,15 +55,15 @@
    */
   async function sendVerificationEmail() {
     loading = true;
-    error = '';
-    successMessage = '';
+    error = "";
+    successMessage = "";
 
     try {
       await sendEmailVerification(auth.currentUser);
-      successMessage = 'Verification email sent! Please check your inbox.';
+      successMessage = "Verification email sent! Please check your inbox.";
     } catch (err) {
-      console.error('Email verification error:', err);
-      error = 'Failed to send verification email. Please try again.';
+      console.error("Email verification error:", err);
+      error = "Failed to send verification email. Please try again.";
     } finally {
       loading = false;
     }
@@ -72,40 +76,41 @@
   async function handlePasswordChange() {
     // Validate inputs
     if (!newPassword || !confirmPassword) {
-      error = 'Please fill in all password fields.';
+      error = "Please fill in all password fields.";
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      error = 'New passwords do not match.';
+      error = "New passwords do not match.";
       return;
     }
 
     if (newPassword.length < 6) {
-      error = 'Password must be at least 6 characters long.';
+      error = "Password must be at least 6 characters long.";
       return;
     }
 
     loading = true;
-    error = '';
-    successMessage = '';
+    error = "";
+    successMessage = "";
 
     try {
       await updatePassword(auth.currentUser, newPassword);
-      successMessage = 'Password updated successfully!';
+      successMessage = "Password updated successfully!";
 
       // Reset form
-      newPassword = '';
-      confirmPassword = '';
-      currentPassword = '';
+      newPassword = "";
+      confirmPassword = "";
+      currentPassword = "";
       isChangingPassword = false;
     } catch (err) {
-      console.error('Password update error:', err);
+      console.error("Password update error:", err);
 
-      if (err.code === 'auth/requires-recent-login') {
-        error = 'For security, please log out and log back in before changing your password.';
+      if (err.code === "auth/requires-recent-login") {
+        error =
+          "For security, please log out and log back in before changing your password.";
       } else {
-        error = 'Failed to update password. Please try again.';
+        error = "Failed to update password. Please try again.";
       }
     } finally {
       loading = false;
@@ -115,9 +120,9 @@
   // ==================== LIFECYCLE HOOKS ====================
   onMount(() => {
     if ($authStore.user) {
-      userEmail = $authStore.user.email || '';
+      userEmail = $authStore.user.email || "";
       emailVerified = $authStore.user.emailVerified || false;
-      userCreatedDate = $authStore.user.metadata?.creationTime || 'Unknown';
+      userCreatedDate = $authStore.user.metadata?.creationTime || "Unknown";
     }
   });
 
@@ -146,7 +151,7 @@
   <!-- Page Header -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="page-header bg-gradient text-white rounded-3 p-4 shadow">
+      <div class="page-header welcome-gradient text-dark rounded-3 p-4 shadow">
         <h1 class="display-6 fw-bold mb-2">
           <i class="bi bi-person-circle me-2"></i>
           User Profile
@@ -160,10 +165,17 @@
   {#if successMessage}
     <div class="row mb-4">
       <div class="col-12">
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div
+          class="alert alert-success alert-dismissible fade show"
+          role="alert"
+        >
           <i class="bi bi-check-circle me-2"></i>
           {successMessage}
-          <button type="button" class="btn-close" on:click={() => successMessage = ''}></button>
+          <button
+            type="button"
+            class="btn-close"
+            on:click={() => (successMessage = "")}
+          ></button>
         </div>
       </div>
     </div>
@@ -173,10 +185,14 @@
   {#if error}
     <div class="row mb-4">
       <div class="col-12">
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div
+          class="alert alert-danger alert-dismissible fade show"
+          role="alert"
+        >
           <i class="bi bi-exclamation-triangle me-2"></i>
           {error}
-          <button type="button" class="btn-close" on:click={() => error = ''}></button>
+          <button type="button" class="btn-close" on:click={() => (error = "")}
+          ></button>
         </div>
       </div>
     </div>
@@ -198,7 +214,7 @@
             <div class="profile-avatar mx-auto mb-3">
               <i class="bi bi-person-fill fs-1 text-white"></i>
             </div>
-            <h5 class="mb-1">{userEmail.split('@')[0] || 'User'}</h5>
+            <h5 class="mb-1">{userEmail.split("@")[0] || "User"}</h5>
             <p class="text-muted small">{userEmail}</p>
           </div>
 
@@ -238,10 +254,10 @@
                 Member Since
               </span>
               <span class="detail-value">
-                {new Date(userCreatedDate).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
+                {new Date(userCreatedDate).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
                 })}
               </span>
             </div>
@@ -256,7 +272,7 @@
                 disabled={loading}
               >
                 <i class="bi bi-envelope-check me-2"></i>
-                {loading ? 'Sending...' : 'Verify Email Address'}
+                {loading ? "Sending..." : "Verify Email Address"}
               </button>
             </div>
           {/if}
@@ -278,12 +294,10 @@
             <!-- Password Change Button -->
             <div class="mb-4">
               <h6 class="mb-3">Password</h6>
-              <p class="text-muted small mb-3">
-                Last changed: Recently
-              </p>
+              <p class="text-muted small mb-3">Last changed: Recently</p>
               <button
                 class="btn btn-outline-secondary w-100"
-                on:click={() => isChangingPassword = true}
+                on:click={() => (isChangingPassword = true)}
               >
                 <i class="bi bi-key me-2"></i>
                 Change Password
@@ -311,7 +325,9 @@
               </div>
 
               <div class="mb-3">
-                <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                <label for="confirmPassword" class="form-label"
+                  >Confirm New Password</label
+                >
                 <input
                   type="password"
                   class="form-control"
@@ -329,16 +345,16 @@
                   class="btn btn-primary flex-fill"
                   disabled={loading}
                 >
-                  {loading ? 'Updating...' : 'Update Password'}
+                  {loading ? "Updating..." : "Update Password"}
                 </button>
                 <button
                   type="button"
                   class="btn btn-outline-secondary flex-fill"
                   on:click={() => {
                     isChangingPassword = false;
-                    newPassword = '';
-                    confirmPassword = '';
-                    error = '';
+                    newPassword = "";
+                    confirmPassword = "";
+                    error = "";
                   }}
                 >
                   Cancel
@@ -403,8 +419,9 @@
 
 <!-- ==================== STYLES ==================== -->
 <style>
-  .bg-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  .welcome-gradient {
+    background-color: #ffdde1;
+    background: linear-gradient(135deg, #ffdde1 0%, #ee9ca7 100%);
   }
 
   .page-header {
@@ -415,7 +432,8 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #ffdde1 0%, #ee9ca7 100%);
+    background-color: #ffdde1;
     display: flex;
     align-items: center;
     justify-content: center;

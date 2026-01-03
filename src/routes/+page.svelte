@@ -3,17 +3,23 @@
   // MAIN DASHBOARD PAGE (Complete Solution)
   // ============================================
   // Central hub displaying user stats, activities, and quick actions
-  import { onMount, onDestroy } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { collection, query, where, getDocs } from 'firebase/firestore';
-  import { db } from '../firebase';
-  import authStore from '../stores/authStore';
+  import { onMount, onDestroy } from "svelte";
+  import { goto } from "$app/navigation";
+  import {
+    collection,
+    query,
+    where,
+    getDocs,
+    onSnapshot,
+  } from "firebase/firestore";
+  import { db } from "../firebase";
+  import authStore from "../stores/authStore";
 
   // Import dashboard components
-  import Navbar from '$lib/Navbar.svelte';
-  import DashboardCard from '$lib/DashboardCard.svelte';
-  import ActivityFeed from '$lib/ActivityFeed.svelte';
-  import QuickActions from '$lib/QuickActions.svelte';
+  import Navbar from "$lib/Navbar.svelte";
+  import DashboardCard from "$lib/DashboardCard.svelte";
+  import ActivityFeed from "$lib/ActivityFeed.svelte";
+  import QuickActions from "$lib/QuickActions.svelte";
 
   // ==================== COMPONENT STATE ====================
   /**
@@ -27,11 +33,11 @@
     totalActivities: 0,
     thisMonth: 0,
     completedTasks: 0,
-    activeProjects: 3
+    activeProjects: 3,
   };
 
   let loading = true;
-  let error = '';
+  let error = "";
 
   // ==================== AUTHENTICATION GUARD ====================
   /**
@@ -40,7 +46,7 @@
    */
   const sub = authStore.subscribe(async (info) => {
     if (!info.isLoggedIn && info.firebaseControlled) {
-      await goto('/login');
+      await goto("/login");
     }
   });
 
@@ -51,37 +57,33 @@
    * - Calculates monthly activity count
    * - Computes completed tasks percentage
    */
-  async function loadDashboardData() {
-    try {
-      // Query all user activities
-      const activitiesQuery = query(
-        collection(db, 'activities'),
-        where('userId', '==', $authStore.user.uid)
-      );
+  // ==================== REAL-TIME DASHBOARD DATA ====================
+  /**
+   * Listens to user activities in real-time and updates statistics
+   */
+  function setupRealTimeStats() {
+    if (!$authStore.user) return () => {};
 
-      const activitiesSnapshot = await getDocs(activitiesQuery);
+    const q = query(
+      collection(db, "activities"),
+      where("userId", "==", $authStore.user.uid),
+    );
 
-      // Update total count
-      stats.totalActivities = activitiesSnapshot.size;
+    return onSnapshot(q, (snapshot) => {
+      stats.totalActivities = snapshot.size;
 
-      // Calculate this month's activities
-      const thisMonth = new Date();
-      thisMonth.setDate(1);
-      thisMonth.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const firstOfRecentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      stats.thisMonth = activitiesSnapshot.docs.filter(doc => {
+      stats.thisMonth = snapshot.docs.filter((doc) => {
         const timestamp = doc.data().timestamp?.toDate();
-        return timestamp && timestamp >= thisMonth;
+        return timestamp && timestamp >= firstOfRecentMonth;
       }).length;
 
-      // Mock completed tasks calculation (70% of total)
+      // Mock completed tasks
       stats.completedTasks = Math.floor(stats.totalActivities * 0.7);
-
-      console.log('Dashboard data loaded:', stats);
-    } catch (err) {
-      console.error('Error loading dashboard data:', err);
-      error = 'Failed to load dashboard data. Please refresh the page.';
-    }
+      console.log("Real-time stats updated:", stats);
+    });
   }
 
   // ==================== LIFECYCLE HOOKS ====================
@@ -89,9 +91,10 @@
    * Load data when component mounts
    * Only if user is authenticated
    */
+  let unsubscribeStats;
   onMount(async () => {
     if ($authStore.user) {
-      await loadDashboardData();
+      unsubscribeStats = setupRealTimeStats();
     }
     loading = false;
   });
@@ -102,6 +105,7 @@
    */
   onDestroy(() => {
     sub();
+    if (unsubscribeStats) unsubscribeStats();
   });
 </script>
 
@@ -125,9 +129,15 @@
 <main class="container-fluid py-4">
   {#if loading}
     <!-- Loading state -->
-    <div class="d-flex justify-content-center align-items-center loading-container">
+    <div
+      class="d-flex justify-content-center align-items-center loading-container"
+    >
       <div class="text-center">
-        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <div
+          class="spinner-border text-primary"
+          role="status"
+          style="width: 3rem; height: 3rem;"
+        >
           <span class="visually-hidden">Loading dashboard...</span>
         </div>
         <p class="text-muted mt-3">Loading your dashboard...</p>
@@ -137,11 +147,15 @@
     <!-- Welcome Section -->
     <div class="row mb-4">
       <div class="col-12">
-        <div class="welcome-card bg-gradient text-white rounded-3 p-4 shadow">
+        <div
+          class="welcome-card welcome-gradient text-dark rounded-3 p-4 shadow"
+        >
           <h1 class="display-6 fw-bold mb-2">
-            Welcome back, {$authStore.user?.email?.split('@')[0] || 'User'}! 👋
+            Welcome back, {$authStore.user?.email?.split("@")[0] || "User"}! 👋
           </h1>
-          <p class="lead mb-0">Here's what's happening with your projects today.</p>
+          <p class="lead mb-0">
+            Here's what's happening with your projects today.
+          </p>
         </div>
       </div>
     </div>
@@ -150,10 +164,17 @@
     {#if error}
       <div class="row mb-4">
         <div class="col-12">
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <div
+            class="alert alert-danger alert-dismissible fade show"
+            role="alert"
+          >
             <i class="bi bi-exclamation-triangle me-2"></i>
             {error}
-            <button type="button" class="btn-close" on:click={() => error = ''}></button>
+            <button
+              type="button"
+              class="btn-close"
+              on:click={() => (error = "")}
+            ></button>
           </div>
         </div>
       </div>
@@ -168,7 +189,7 @@
           value={stats.totalActivities.toString()}
           icon="activity"
           color="primary"
-          trend={{ direction: 'up', percentage: 12 }}
+          trend={{ direction: "up", percentage: 12 }}
         />
       </div>
 
@@ -179,7 +200,7 @@
           value={stats.thisMonth.toString()}
           icon="calendar-month"
           color="success"
-          trend={{ direction: 'up', percentage: 8 }}
+          trend={{ direction: "up", percentage: 8 }}
         />
       </div>
 
@@ -190,7 +211,7 @@
           value={stats.completedTasks.toString()}
           icon="check-circle"
           color="info"
-          trend={{ direction: 'down', percentage: 3 }}
+          trend={{ direction: "down", percentage: 3 }}
         />
       </div>
 
@@ -231,8 +252,12 @@
           <div class="card-body">
             <div class="text-center py-5 placeholder-section">
               <i class="bi bi-bar-chart fs-1 text-muted"></i>
-              <p class="text-muted mt-3 mb-1">Charts and analytics coming soon...</p>
-              <small class="text-muted">We're working on advanced visualizations for you</small>
+              <p class="text-muted mt-3 mb-1">
+                Charts and analytics coming soon...
+              </p>
+              <small class="text-muted"
+                >We're working on advanced visualizations for you</small
+              >
             </div>
           </div>
         </div>
@@ -244,8 +269,9 @@
 <!-- ==================== STYLES ==================== -->
 <style>
   /* Background gradient for welcome card */
-  .bg-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  .welcome-gradient {
+    background-color: #ffdde1;
+    background: linear-gradient(135deg, #ffdde1 0%, #ee9ca7 100%);
   }
 
   /* Welcome card styling */
