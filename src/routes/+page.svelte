@@ -42,13 +42,8 @@
   // ==================== AUTHENTICATION GUARD ====================
   /**
    * Redirect to login if user is not authenticated
-   * This subscription watches authStore for changes
    */
-  const sub = authStore.subscribe(async (info) => {
-    if (!info.isLoggedIn && info.firebaseControlled) {
-      await goto("/login");
-    }
-  });
+  let authRedirectSub;
 
   // ==================== LOAD DASHBOARD DATA ====================
   /**
@@ -87,24 +82,31 @@
   }
 
   // ==================== LIFECYCLE HOOKS ====================
-  /**
-   * Load data when component mounts
-   * Only if user is authenticated
-   */
   let unsubscribeStats;
+  let authSub;
+
   onMount(async () => {
-    if ($authStore.user) {
-      unsubscribeStats = setupRealTimeStats();
-    }
+    // Redirect logic moved here to avoid SSR issues
+    authRedirectSub = authStore.subscribe(async (info) => {
+      if (!info.isLoggedIn && info.firebaseControlled) {
+        await goto("/login");
+      }
+    });
+
+    // Reactive stats setup inside onMount to avoid SSR issues
+    authSub = authStore.subscribe((state) => {
+      if (state.user && state.user.uid) {
+        if (unsubscribeStats) unsubscribeStats();
+        unsubscribeStats = setupRealTimeStats();
+      }
+    });
+
     loading = false;
   });
 
-  /**
-   * Clean up subscription when component unmounts
-   * Prevents memory leaks
-   */
   onDestroy(() => {
-    sub();
+    if (authRedirectSub) authRedirectSub();
+    if (authSub) authSub();
     if (unsubscribeStats) unsubscribeStats();
   });
 </script>

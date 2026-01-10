@@ -21,7 +21,8 @@ function createAuthStore() {
   const { subscribe, set, update } = writable({
     user: null,
     loading: true,  // Start with loading=true until we know auth state
-    isLoggedIn: false
+    isLoggedIn: false,
+    firebaseControlled: false
   });
 
   return {
@@ -35,7 +36,8 @@ function createAuthStore() {
       set({
         user: user,
         loading: false,
-        isLoggedIn: !!user  // Convert user to boolean (null -> false, object -> true)
+        isLoggedIn: !!user,
+        firebaseControlled: true
       });
     },
 
@@ -46,7 +48,8 @@ function createAuthStore() {
       set({
         user: null,
         loading: false,
-        isLoggedIn: false
+        isLoggedIn: false,
+        firebaseControlled: true
       });
     }
   };
@@ -85,6 +88,9 @@ if (auth) {
 }
 
 // ==================== EXPORT ====================
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  window.authStore = authStore;
+}
 export default authStore;
 
 // ==================== USAGE EXAMPLES ====================

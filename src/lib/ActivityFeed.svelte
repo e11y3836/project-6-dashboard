@@ -3,7 +3,7 @@
   // ACTIVITY FEED COMPONENT (Complete Solution)
   // ============================================
   // Real-time activity feed using Firestore onSnapshot
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import {
     collection,
     query,
@@ -22,49 +22,64 @@
 
   // ==================== REAL-TIME LISTENER ====================
   /**
-   * Sets up Firestore real-time listener on component mount
-   * - Queries activities collection
-   * - Orders by timestamp (newest first)
-   * - Limits to 10 most recent activities
-   * - Auto-updates when data changes
+   * Listener setup
    */
+  let unsubscribe;
+
   onMount(() => {
-    if (!$authStore.user) {
-      loading = false;
-      return;
-    }
+    // Subscribe to authStore to handle login/logout reactively
+    const authSub = authStore.subscribe((state) => {
+      if (state.user && state.user.uid) {
+        // Clean up existing listener if any
+        if (unsubscribe) unsubscribe();
 
-    // Build Firestore query
-    const q = query(
-      collection(db, "activities"),
-      where("userId", "==", $authStore.user.uid),
-      orderBy("timestamp", "desc"),
-      limit(10),
-    );
+        loading = true;
+        error = "";
 
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        // Transform Firestore documents to JavaScript objects
-        activities = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          // Convert Firestore Timestamp to JavaScript Date
-          timestamp: doc.data().timestamp?.toDate(),
-        }));
+        // Build Firestore query
+        const q = query(
+          collection(db, "activities"),
+          where("userId", "==", state.user.uid),
+          orderBy("timestamp", "desc"),
+          limit(10),
+        );
+
+        // Set up real-time listener
+        unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            activities = snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+              timestamp: doc.data().timestamp?.toDate(),
+            }));
+            loading = false;
+          },
+          (err) => {
+            console.error("Error listening to activities:", err);
+            error = "Failed to load activities.";
+            loading = false;
+          },
+        );
+      } else if (!state.loading) {
         loading = false;
-        console.log(`Loaded ${activities.length} activities`);
-      },
-      (err) => {
-        console.error("Error listening to activities:", err);
-        error = "Failed to load activities. Please refresh the page.";
-        loading = false;
-      },
-    );
+        if (unsubscribe) {
+          unsubscribe();
+          unsubscribe = null;
+          activities = [];
+        }
+      }
+    });
 
-    // Critical: Clean up listener when component unmounts
-    return unsubscribe;
+    return () => {
+      authSub();
+      if (unsubscribe) unsubscribe();
+    };
+  });
+
+  // Clean up listener when component is destroyed
+  onDestroy(() => {
+    if (unsubscribe) unsubscribe();
   });
 
   // ==================== HELPER FUNCTIONS ====================
@@ -77,7 +92,7 @@
     if (!timestamp) return "";
 
     const now = new Date();
-    const diff = now - timestamp; // Difference in milliseconds
+    const diff = now.getTime() - timestamp.getTime(); // Difference in milliseconds
 
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
