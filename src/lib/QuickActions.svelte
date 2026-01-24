@@ -114,6 +114,8 @@
 <!-- ==================== ADD ACTIVITY MODAL ==================== -->
 {#if showModal}
   <!-- Modal backdrop -->
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div
     class="modal fade show d-block"
     tabindex="-1"
@@ -124,6 +126,8 @@
     aria-label="Close modal"
   >
     <!-- Modal dialog -->
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
     <div
       class="modal-dialog modal-dialog-centered"
       on:click|stopPropagation

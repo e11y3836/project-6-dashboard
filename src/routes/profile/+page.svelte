@@ -5,11 +5,7 @@
   // User profile management and account settings
   import { onMount, onDestroy } from "svelte";
   import { goto } from "$app/navigation";
-  import {
-    updatePassword,
-    updateEmail,
-    sendEmailVerification,
-  } from "firebase/auth";
+  import { updatePassword, sendEmailVerification } from "firebase/auth";
   import { auth } from "../../firebase";
   import authStore from "../../stores/authStore";
   import Navbar from "$lib/Navbar.svelte";
