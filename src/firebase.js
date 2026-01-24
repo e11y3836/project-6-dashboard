@@ -7,6 +7,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getAnalytics, isSupported } from 'firebase/analytics';
 
 // ==================== FIREBASE CONFIG ====================
 // Using environment variables for secure configuration
@@ -15,18 +16,6 @@ import { getFirestore } from 'firebase/firestore';
 /**
  * Firebase configuration object
  * All values are loaded from environment variables (VITE_FIREBASE_*)
- *
- * SETUP INSTRUCTIONS:
- * 1. Copy .env.example to .env in the project root
- * 2. Get your Firebase config from: https://console.firebase.google.com/
- *    - Go to Project Settings → General → Your apps
- *    - Copy each value to your .env file
- * 3. The app will automatically use your environment variables
- *
- * Why use .env?
- * - Keeps credentials secure (never commit .env to git)
- * - Easy to switch between projects
- * - Professional best practice
  */
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -34,7 +23,8 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // ==================== INITIALIZATION ====================
@@ -42,11 +32,11 @@ const firebaseConfig = {
 /**
  * Initialize Firebase with graceful degradation
  * If credentials are missing, export null to allow app to run in demo mode
- * This is important for template solutions and development
  */
 let app = null;
 let auth = null;
 let db = null;
+let analytics = null;
 
 try {
   // Check if Firebase is configured
@@ -68,6 +58,14 @@ try {
     // Initialize Cloud Firestore Database
     db = getFirestore(app);
 
+    // Initialize Analytics if supported (browser environments)
+    isSupported().then(supported => {
+      if (supported) {
+        analytics = getAnalytics(app);
+        console.log('✅ Firebase Analytics initialized');
+      }
+    });
+
     console.log('✅ Firebase initialized successfully');
   }
 } catch (error) {
@@ -76,7 +74,7 @@ try {
 }
 
 // Export services (will be null if Firebase not configured)
-export { auth, db };
+export { auth, db, analytics };
 
 // ==================== USAGE EXAMPLES ====================
 //

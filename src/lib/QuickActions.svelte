@@ -14,14 +14,6 @@
   let loading = false;
   let error = '';
 
-  // ==================== ADD ACTIVITY FUNCTION ====================
-  /**
-   * Adds a new activity to Firestore
-   * - Validates input (title required)
-   * - Creates new document in 'activities' collection
-   * - Includes userId, timestamp, and activity data
-   * - Resets form and closes modal on success
-   */
   async function addQuickAction() {
     // Validate input
     if (!actionTitle.trim()) {
@@ -33,8 +25,10 @@
     error = '';
 
     try {
-      // Write to Firestore
-      await addDoc(collection(db, 'activities'), {
+      console.log('🚀 Attempting to add activity to Firestore...');
+      
+      // Create the addDoc promise
+      const addPromise = addDoc(collection(db, 'activities'), {
         userId: $authStore.user.uid,
         title: actionTitle.trim(),
         description: actionDescription.trim(),
@@ -42,15 +36,30 @@
         type: 'quick_action'
       });
 
-      console.log('Activity added successfully');
+      // Create a timeout promise (10 seconds)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('TIMEOUT')), 10000)
+      );
+
+      // Race the promises
+      await Promise.race([addPromise, timeoutPromise]);
+
+      console.log('✅ Activity added successfully');
 
       // Reset form
       actionTitle = '';
       actionDescription = '';
       showModal = false;
     } catch (err) {
-      console.error('Error adding activity:', err);
-      error = 'Failed to add activity. Please try again.';
+      console.error('❌ Error adding activity:', err);
+      
+      if (err.message === 'TIMEOUT') {
+        error = 'Operation timed out. Please check your Firestore database and connection.';
+      } else if (err.code === 'permission-denied') {
+        error = 'Permission denied. Check your Firestore security rules.';
+      } else {
+        error = 'Failed to add activity. ' + (err.message || 'Please try again.');
+      }
     } finally {
       loading = false;
     }
